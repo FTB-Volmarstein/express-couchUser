@@ -17,14 +17,14 @@ module.exports = function(config) {
     safeUserFields = config.safeUserFields ? config.safeUserFields : "name email roles",
     db;
 
-  function configureNano(cookie) {
-    return nano({
-      url: config.users,
-      request_defaults: config.request_defaults,
-      cookie: cookie
-    });
-  }
-
+    function configureNano (cookie) {
+      return nano({
+        url: config.users,
+        requestDefaults: config.request_defaults,
+        cookie: cookie
+      });
+    }
+    
   db = configureNano();
 
   var transport;
@@ -223,13 +223,13 @@ module.exports = function(config) {
 
     // initialize the emailTemplate engine
     function createEmail(err, body) {
-      if (err) { return res.status(err.status_code ? err.status_code : 500, err); }
+      if (err) { return res.status(err.status_code ? err.status_code : 500).send(err); }
       emailTemplates(config.email.templateDir, renderForgotTemplate);
     }
 
     // render forgot.ejs
     function renderForgotTemplate(err, template) {
-      if (err) { return res.status(err.status_code ? err.status_code : 500, err); }
+      if (err) { return res.status(err.status_code ? err.status_code : 500).send(err); }
       // use header host for reset url
       config.app.url = 'http://' + req.headers.host;
       template('forgot', { user: user, app: config.app }, sendEmail);
@@ -237,7 +237,7 @@ module.exports = function(config) {
 
     // send rendered template to user
     function sendEmail(err, html, text) {
-      if (err) { return res.status(err.status_code ? err.status_code : 500, err); }
+      if (err) { return res.status(err.status_code ? err.status_code : 500).send(err); }
       if (!transport) { return res.status(500, { error: 'transport is not configured!'}); }
       transport.sendMail({
         from: config.email.from,
@@ -249,7 +249,7 @@ module.exports = function(config) {
 
     // complete action
     function done(err, status) {
-      if (err) { return res.status(err.status_code ? err.status_code : 500, err); }
+      if (err) { return res.status(err.status_code ? err.status_code : 500).send(err); }
       res.status(200).send(JSON.stringify({ ok: true, message: "forgot password link sent..." }));
       //app.emit('user: forgot password', user);
     }
@@ -418,7 +418,7 @@ app.get('/api/user/code/:code', function(req, res) {
   });
 
   // Delete a user
-  app.del('/api/user/:name', function(req,res) {
+  app.delete('/api/user/:name', function(req,res) {
     if (!req.session || !req.session.user) {
       return res.status(401).send(JSON.stringify({ok: false, message: "You must be logged in to use this function"}));
     }
